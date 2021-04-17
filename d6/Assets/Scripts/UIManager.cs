@@ -7,6 +7,9 @@ using DG.Tweening;
 public class UIManager : MonoBehaviour
 {
     public Transform DiceListUIParent;
+    public Text Score;
+    public Text Chain;
+    public Text HP;
 
     public GameObject Row;
     public GameObject Dice;

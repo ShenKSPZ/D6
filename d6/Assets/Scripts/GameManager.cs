@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-
     //First List use to store row
     //Second List use to store Column
     public DiceUI Slot;
     public RectTransform SlotUI;
     public int Score;
     public int Chain;
-    public int HP;
+    public int HP = 6;
 
     [Space(10)]
     public UIManager UIMgr;
@@ -70,8 +70,16 @@ public class GameManager : MonoBehaviour
     {
         IsInAnimation = true;
         //TODO: Check is the clicked dice is moveable or not
-        if(clicked.DicePointer.y == 1)
+        if(clicked.DicePointer.y == 1 && IsVaild(Slot, clicked))
         {
+            //Score plus one
+            Score++;
+            Chain++;
+
+            //Change UI
+            UIMgr.Score.text = Score.ToString() + "/50";//TODO: Change to stringbuilder
+            UIMgr.Chain.text = Chain.ToString();
+
             //Change Parent and do animation moving
             Vector3 pos = clicked.transform.position;
             clicked.transform.SetParent(SlotUI, false);
@@ -109,31 +117,56 @@ public class GameManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
         }
 
-        
-
+        Check();
         IsInAnimation = false;
     }
 
     IEnumerator Discard()
     {
         IsInAnimation = true;
-        print("Discard");
+
+        Slot.transform.DOMove(new Vector3(Slot.transform.position.x, -500), 0.5f);
+
+        Chain = 0;
+        HP--;
+        //Change UI
+        UIMgr.Chain.text = Chain.ToString();
+        UIMgr.HP.text = HP.ToString();
+
         yield return new WaitForSeconds(0.5f);
+
+        Destroy(Slot.gameObject);
+        Slot = null;
+
+        Check();
         IsInAnimation = false;
+    }
+
+    bool IsVaild(DiceUI Slot, DiceUI Clicked)
+    {
+        if (Slot == null)
+            return true;
+        if (
+            (Slot.dice.Number <= 5 && Slot.dice.Number >= 1 && Slot.dice.Number == Clicked.dice.Number - 1)
+            || (Slot.dice.Number == 6 && Clicked.dice.Number == 1)
+            || (Slot.dice.DiceColor == Clicked.dice.DiceColor)
+            )
+            return true;
+        else
+            return false;
     }
 
     void Check()
     {
-
+        if(HP < 0 && Score >= 50)
+        {
+            SceneManager.LoadScene("GameWin");
+        }
+        else if(HP < 0)
+        {
+            SceneManager.LoadScene("GameOver");
+        }
     }
 
-    void GameOver()
-    {
 
-    }
-
-    void GameWin()
-    {
-
-    }
 }
