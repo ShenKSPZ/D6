@@ -11,6 +11,7 @@ public enum Color
     GreyishGreen,
 }
 
+[System.Serializable]
 public class Dice
 {
     //1 - 6

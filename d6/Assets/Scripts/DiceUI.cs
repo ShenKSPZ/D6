@@ -8,6 +8,10 @@ public class DiceUI : MonoBehaviour
     public Image DiceColor;
     public Text DiceNumber;
 
+    public Vector2Int DicePointer;
+
+    public Dice dice;
+
     public bool isInSlot
     {
         get
@@ -40,6 +44,8 @@ public class DiceUI : MonoBehaviour
             default:
                 break;
         }
+
+        this.dice = dice;
     }
 
     public static UnityEngine.Color newColor(float r, float g, float b)
