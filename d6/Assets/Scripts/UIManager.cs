@@ -6,19 +6,37 @@ using DG.Tweening;
 
 public class UIManager : MonoBehaviour
 {
+    public GameManager GM;
+
     public Transform DiceListUIParent;
     public Text Score;
     public Text Chain;
-    public Text HP;
+    public ProgressBar Bar;
+    public Image BlackScreen;
+    public HP_UI HP;
+
+    [Space(10)]
+    public RectTransform Win;
+    public RectTransform Lose;
+    public RectTransform Retry;
 
     public GameObject Row;
     public GameObject Dice;
 
-    public List<List<DiceUI>> diceUIList = new List<List<DiceUI>>();
-    public List<List<Vector2>> gridPos = new List<List<Vector2>>();
+    //First List use to store row
+    //Second List use to store Column
+    public List<List<DiceUI>> DiceUIList = new List<List<DiceUI>>();
+
+    //Use to store the postion of grid
+    public List<List<Vector2>> LayoutPos = new List<List<Vector2>>();
 
     [HideInInspector]
     public List<GameObject> Rows = new List<GameObject>();
+
+    private void Awake()
+    {
+        BlackScreen.color = Color.black;
+    }
 
     public void ShowList(List<List<Dice>> DiceList)
     {
@@ -26,7 +44,7 @@ public class UIManager : MonoBehaviour
         {
             Rows.Add(Instantiate(Row, DiceListUIParent, false));
 
-            diceUIList.Add(new List<DiceUI>());
+            DiceUIList.Add(new List<DiceUI>());
 
             for (int x = 0; x < DiceList[y].Count; x++)
             {
@@ -38,10 +56,11 @@ public class UIManager : MonoBehaviour
                 diceUI.DicePointer.y = y;
                 diceUI.DicePointer.x = x;
 
-                diceUIList[y].Add(diceUI);
+                DiceUIList[y].Add(diceUI);
             }
         }
 
+        //Using coroutine because the unity's layout group only update in next frame, so we have to wait to next frame to get the grid position
         StartCoroutine(IE_AssignPos());
     }
 
@@ -51,20 +70,44 @@ public class UIManager : MonoBehaviour
         yield return null;
         //Wait For End of Frame
         yield return new WaitForEndOfFrame();
-        for (int y = 0; y < diceUIList.Count; y++)
+        //Store the current position of all dice to a list
+        for (int y = 0; y < DiceUIList.Count; y++)
         {
-            gridPos.Add(new List<Vector2>());
-            for (int x = 0; x < diceUIList[y].Count; x++)
+            LayoutPos.Add(new List<Vector2>());
+            for (int x = 0; x < DiceUIList[y].Count; x++)
             {
-                gridPos[y].Add(diceUIList[y][x].transform.position);
+                LayoutPos[y].Add(DiceUIList[y][x].transform.position);
             }
         }
+        //disable layout group
         EnableLayoutGroup(false);
+        GM.IsInAnimation = true;
+
+        for (int y = 0; y < DiceUIList.Count; y++)
+        {
+            for (int x = 0; x < DiceUIList[y].Count; x++)
+            {
+                DiceUIList[y][x].transform.position = new Vector3(DiceUIList[y][x].transform.position.x, 1080 + 300);
+            }
+        }
+
+        BlackScreen.DOColor(Color.clear, 0.2f);
+        yield return new WaitForSeconds(0.1f);
+
+        for (int y = 1; y >= 0; y--)
+        {
+            for (int x = 0; x < DiceUIList[y].Count; x++)
+            {
+                DiceUIList[y][x].transform.DOMoveY(GetPos(new Vector2Int(x, y)).y, 0.5f);
+                yield return new WaitForSeconds(0.08f);
+            }
+        }
+        GM.IsInAnimation = false;
     }
 
     public Vector2 GetPos(Vector2Int Pos)
     {
-        return gridPos[Pos.y][Pos.x];
+        return LayoutPos[Pos.y][Pos.x];
     }
 
     public void AddDice(Dice newDice, Vector2Int Pos)
@@ -77,7 +120,7 @@ public class UIManager : MonoBehaviour
         Vector3 TargetPos = GetPos(Pos);
         diceUI.transform.position = new Vector3(TargetPos.x, 1080 + 400);
         diceUI.transform.DOMove(TargetPos, 0.5f);
-        diceUIList[Pos.y].Insert(Pos.x, diceUI);
+        DiceUIList[Pos.y].Insert(Pos.x, diceUI);
     }
 
     public void EnableLayoutGroup(bool enable)

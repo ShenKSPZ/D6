@@ -7,48 +7,95 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    //First List use to store row
-    //Second List use to store Column
-    public DiceUI Slot;
     public RectTransform SlotUI;
-    public int Score;
-    public int Chain;
-    public int HP = 6;
+    public AudioSource AuPlayer;
+    public AudioSource WinOverPlayer;
+    public AudioClip ChainAudio;
+    public AudioClip DiscardAudio;
+    public AudioClip WinSound;
+    public AudioClip GameOverSound;
+
+    DiceUI Slot;
+
+    public int Score
+    {
+        get
+        {
+            return score;
+        }
+        set
+        {
+            score = value;
+            UIMgr.Score.text = score.ToString() + "/";
+            UIMgr.Bar.SetFill(score, 50);
+        }
+    }
+    int score;
+
+    public int Chain
+    {
+        get
+        {
+            return chain;
+        }
+        set
+        {
+            chain = value;
+            UIMgr.Chain.text = Chain.ToString();
+        }
+    }
+    int chain;
+
+    public int HP
+    {
+        get
+        {
+            return hp;
+        }
+        set
+        {
+            hp = value;
+            UIMgr.HP.SetHP(value);
+        }
+    }
+    int hp;
 
     [Space(10)]
     public UIManager UIMgr;
 
-    bool IsInAnimation;
+    public bool IsInAnimation;
 
     void Awake()
     {
-        Generate();
+        HP = 6;
+        Construct();
     }
 
     void Update()
     {
-        InputEveryFrame();
+        PlayerInput();
     }
 
-    void Generate()
+    //Randomly generate a list of dice
+    void Construct()
     {
         //Add double times to have two rows. 
         List<List<Dice>> DiceList = new List<List<Dice>>();
-        DiceList.Add(new List<Dice>());
-        DiceList.Add(new List<Dice>());
+        for (int i = 0; i < 2; i++)
+            DiceList.Add(new List<Dice>());
 
         for (int y = 0; y < DiceList.Count; y++)
         {
             for (int x = 0; x < 5; x++)
             {
-                DiceList[y].Add(Dice.GetRandomDice());
+                DiceList[y].Add(Dice.RandomDice());
             }
         }
 
         UIMgr.ShowList(DiceList);
     }
 
-    void InputEveryFrame()
+    void PlayerInput()
     {
         if (Input.GetMouseButtonDown(0))
         {
@@ -75,11 +122,8 @@ public class GameManager : MonoBehaviour
             //Score plus one
             Score++;
             Chain++;
-
-            //Change UI
-            UIMgr.Score.text = Score.ToString() + "/50";//TODO: Change to stringbuilder
-            UIMgr.Chain.text = Chain.ToString();
-
+            AuPlayer.pitch = 1f + (Chain - 1) / 20f * 2f;
+            AuPlayer.PlayOneShot(ChainAudio);
             //Change Parent and do animation moving
             Vector3 pos = clicked.transform.position;
             clicked.transform.SetParent(SlotUI, false);
@@ -87,23 +131,23 @@ public class GameManager : MonoBehaviour
 
             clicked.transform.DOMove(SlotUI.transform.position, 0.5f);
 
-            //把DiceList内的Dice向下移动
+            //Move the element in DiceList down
             Vector2Int clickedPos = new Vector2Int(clicked.DicePointer.x, clicked.DicePointer.y);
 
             //--Move in List
-            UIMgr.diceUIList[clickedPos.y].RemoveAt(clickedPos.x);
-            DiceUI temp = UIMgr.diceUIList[clickedPos.y - 1][clickedPos.x];
-            UIMgr.diceUIList[clickedPos.y].Insert(clickedPos.x, temp);
-            UIMgr.diceUIList[clickedPos.y - 1].RemoveAt(clickedPos.x);
-            UIMgr.diceUIList[clickedPos.y][clickedPos.x].DicePointer = clickedPos;
-            UIMgr.diceUIList[clickedPos.y][clickedPos.x].transform.SetParent(UIMgr.Rows[clickedPos.y].transform);
-            UIMgr.diceUIList[clickedPos.y][clickedPos.x].transform.SetSiblingIndex(clickedPos.x);
+            UIMgr.DiceUIList[clickedPos.y].RemoveAt(clickedPos.x);
+            DiceUI temp = UIMgr.DiceUIList[clickedPos.y - 1][clickedPos.x];
+            UIMgr.DiceUIList[clickedPos.y].Insert(clickedPos.x, temp);
+            UIMgr.DiceUIList[clickedPos.y - 1].RemoveAt(clickedPos.x);
+            UIMgr.DiceUIList[clickedPos.y][clickedPos.x].DicePointer = clickedPos;
+            UIMgr.DiceUIList[clickedPos.y][clickedPos.x].transform.SetParent(UIMgr.Rows[clickedPos.y].transform);
+            UIMgr.DiceUIList[clickedPos.y][clickedPos.x].transform.SetSiblingIndex(clickedPos.x);
 
             //--Move in Animation
-            UIMgr.diceUIList[clickedPos.y][clickedPos.x].transform.DOMove(UIMgr.GetPos(clickedPos), 0.5f);
+            UIMgr.DiceUIList[clickedPos.y][clickedPos.x].transform.DOMove(UIMgr.GetPos(clickedPos), 0.5f);
 
             //Generate a new Dice
-            UIMgr.AddDice(Dice.GetRandomDice(), new Vector2Int(clickedPos.x, clickedPos.y - 1));
+            UIMgr.AddDice(Dice.RandomDice(), new Vector2Int(clickedPos.x, clickedPos.y - 1));
 
             yield return new WaitForSeconds(0.5f);
 
@@ -113,11 +157,11 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            clicked.transform.DOPunchPosition(Vector3.one * 30, 0.5f);
+            clicked.transform.DOShakePosition(0.5f, 15, 90, 50);
             yield return new WaitForSeconds(0.5f);
         }
 
-        Check();
+        StartCoroutine(Check());
         IsInAnimation = false;
     }
 
@@ -128,17 +172,16 @@ public class GameManager : MonoBehaviour
         Slot.transform.DOMove(new Vector3(Slot.transform.position.x, -500), 0.5f);
 
         Chain = 0;
+        AuPlayer.pitch = 1;
+        AuPlayer.PlayOneShot(DiscardAudio);
         HP--;
-        //Change UI
-        UIMgr.Chain.text = Chain.ToString();
-        UIMgr.HP.text = HP.ToString();
 
         yield return new WaitForSeconds(0.5f);
 
         Destroy(Slot.gameObject);
         Slot = null;
 
-        Check();
+        StartCoroutine(Check());
         IsInAnimation = false;
     }
 
@@ -156,17 +199,46 @@ public class GameManager : MonoBehaviour
             return false;
     }
 
-    void Check()
+    IEnumerator Check()
     {
+        if(Score >= 50)
+        {
+            if (!UIMgr.Bar.IsShinny)
+            {
+                UIMgr.Bar.SetShinny();
+                WinOverPlayer.PlayOneShot(WinSound);
+            }
+        }
+
         if(HP < 0 && Score >= 50)
         {
-            SceneManager.LoadScene("GameWin");
+            IsInAnimation = true;
+            for (int y = 0; y < UIMgr.DiceUIList.Count; y++)
+            {
+                for (int x = 0; x < UIMgr.DiceUIList[y].Count; x++)
+                {
+                    UIMgr.DiceUIList[y][x].transform.DOMoveX(-1400, 0.5f);
+                    yield return new WaitForSeconds(0.04f);
+                }
+            }
+            UIMgr.Win.DOMoveX(960, 0.5f);
+            UIMgr.Retry.DOMoveY(165, 0.5f);
+            WinOverPlayer.PlayOneShot(WinSound);
         }
         else if(HP < 0)
         {
-            SceneManager.LoadScene("GameOver");
+            IsInAnimation = true;
+            for (int y = 0; y < UIMgr.DiceUIList.Count; y++)
+            {
+                for (int x = 0; x < UIMgr.DiceUIList[y].Count; x++)
+                {
+                    UIMgr.DiceUIList[y][x].transform.DOMoveX(-1400, 0.5f);
+                    yield return new WaitForSeconds(0.04f);
+                }
+            }
+            UIMgr.Lose.DOMoveX(960, 0.5f);
+            UIMgr.Retry.DOMoveY(165, 0.5f);
+            WinOverPlayer.PlayOneShot(GameOverSound);
         }
     }
-
-
 }
