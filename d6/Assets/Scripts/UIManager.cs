@@ -8,6 +8,7 @@ public class UIManager : MonoBehaviour
 {
     public GameManager GM;
 
+    public RectTransform Canvas;
     public Transform DiceListUIParent;
     public Text Score;
     public Text Chain;
@@ -76,7 +77,10 @@ public class UIManager : MonoBehaviour
             LayoutPos.Add(new List<Vector2>());
             for (int x = 0; x < DiceUIList[y].Count; x++)
             {
-                LayoutPos[y].Add(DiceUIList[y][x].transform.position);
+                Vector2 NeedStore = DiceUIList[y][x].transform.position;
+                NeedStore.x /= Canvas.localScale.x;
+                NeedStore.y /= Canvas.localScale.y;
+                LayoutPos[y].Add(NeedStore);
             }
         }
         //disable layout group
@@ -107,7 +111,10 @@ public class UIManager : MonoBehaviour
 
     public Vector2 GetPos(Vector2Int Pos)
     {
-        return LayoutPos[Pos.y][Pos.x];
+        Vector2 StoredPos = LayoutPos[Pos.y][Pos.x];
+        StoredPos.x *= Canvas.localScale.x;
+        StoredPos.y *= Canvas.localScale.y;
+        return StoredPos;
     }
 
     public void AddDice(Dice newDice, Vector2Int Pos)

@@ -22,7 +22,7 @@ public class ProgressBar : MonoBehaviour
 
     public void SetShinny()
     {
-        IsShinny = false;
+        IsShinny = true;
         StartCoroutine(Shinny());
     }
 

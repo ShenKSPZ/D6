@@ -81,6 +81,7 @@ public class GameManager : MonoBehaviour
     {
         //Add double times to have two rows. 
         List<List<Dice>> DiceList = new List<List<Dice>>();
+
         for (int i = 0; i < 2; i++)
             DiceList.Add(new List<Dice>());
 
@@ -116,7 +117,7 @@ public class GameManager : MonoBehaviour
     IEnumerator Replace(DiceUI clicked)
     {
         IsInAnimation = true;
-        //TODO: Check is the clicked dice is moveable or not
+        //Check is the clicked dice is moveable or not
         if(clicked.DicePointer.y == 1 && IsVaild(Slot, clicked))
         {
             //Score plus one
@@ -126,7 +127,9 @@ public class GameManager : MonoBehaviour
             AuPlayer.PlayOneShot(ChainAudio);
             //Change Parent and do animation moving
             Vector3 pos = clicked.transform.position;
+
             clicked.transform.SetParent(SlotUI, false);
+
             clicked.transform.position = pos;
 
             clicked.transform.DOMove(SlotUI.transform.position, 0.5f);
@@ -217,12 +220,12 @@ public class GameManager : MonoBehaviour
             {
                 for (int x = 0; x < UIMgr.DiceUIList[y].Count; x++)
                 {
-                    UIMgr.DiceUIList[y][x].transform.DOMoveX(-1400, 0.5f);
+                    UIMgr.DiceUIList[y][x].transform.DOMoveX(-1400 * UIMgr.Canvas.localScale.x, 0.5f);
                     yield return new WaitForSeconds(0.04f);
                 }
             }
-            UIMgr.Win.DOMoveX(960, 0.5f);
-            UIMgr.Retry.DOMoveY(165, 0.5f);
+            UIMgr.Win.DOMoveX(960 * UIMgr.Canvas.localScale.x, 0.5f);
+            UIMgr.Retry.DOMoveY(165 * UIMgr.Canvas.localScale.y, 0.5f);
             WinOverPlayer.PlayOneShot(WinSound);
         }
         else if(HP < 0)
@@ -232,12 +235,12 @@ public class GameManager : MonoBehaviour
             {
                 for (int x = 0; x < UIMgr.DiceUIList[y].Count; x++)
                 {
-                    UIMgr.DiceUIList[y][x].transform.DOMoveX(-1400, 0.5f);
+                    UIMgr.DiceUIList[y][x].transform.DOMoveX(-1400 * UIMgr.Canvas.localScale.x, 0.5f);
                     yield return new WaitForSeconds(0.04f);
                 }
             }
-            UIMgr.Lose.DOMoveX(960, 0.5f);
-            UIMgr.Retry.DOMoveY(165, 0.5f);
+            UIMgr.Lose.DOMoveX(960 * UIMgr.Canvas.localScale.x, 0.5f);
+            UIMgr.Retry.DOMoveY(165 * UIMgr.Canvas.localScale.y, 0.5f);
             WinOverPlayer.PlayOneShot(GameOverSound);
         }
     }
