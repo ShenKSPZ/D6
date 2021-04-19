@@ -79,6 +79,7 @@ public class GameManager : MonoBehaviour
     //Randomly generate a list of dice
     void Construct()
     {
+
         //Add double times to have two rows. 
         List<List<Dice>> DiceList = new List<List<Dice>>();
 
@@ -142,6 +143,8 @@ public class GameManager : MonoBehaviour
             DiceUI temp = UIMgr.DiceUIList[clickedPos.y - 1][clickedPos.x];
             UIMgr.DiceUIList[clickedPos.y].Insert(clickedPos.x, temp);
             UIMgr.DiceUIList[clickedPos.y - 1].RemoveAt(clickedPos.x);
+
+
             UIMgr.DiceUIList[clickedPos.y][clickedPos.x].DicePointer = clickedPos;
             UIMgr.DiceUIList[clickedPos.y][clickedPos.x].transform.SetParent(UIMgr.Rows[clickedPos.y].transform);
             UIMgr.DiceUIList[clickedPos.y][clickedPos.x].transform.SetSiblingIndex(clickedPos.x);
@@ -164,8 +167,8 @@ public class GameManager : MonoBehaviour
             yield return new WaitForSeconds(0.5f);
         }
 
-        StartCoroutine(Check());
         IsInAnimation = false;
+        StartCoroutine(Check());
     }
 
     IEnumerator Discard()
@@ -184,8 +187,8 @@ public class GameManager : MonoBehaviour
         Destroy(Slot.gameObject);
         Slot = null;
 
-        StartCoroutine(Check());
         IsInAnimation = false;
+        StartCoroutine(Check());
     }
 
     bool IsVaild(DiceUI Slot, DiceUI Clicked)
@@ -204,7 +207,8 @@ public class GameManager : MonoBehaviour
 
     IEnumerator Check()
     {
-        if(Score >= 50)
+
+        if (Score >= 50)
         {
             if (!UIMgr.Bar.IsShinny)
             {
@@ -213,7 +217,7 @@ public class GameManager : MonoBehaviour
             }
         }
 
-        if(HP < 0 && Score >= 50)
+        if (HP < 0 && Score >= 50)
         {
             IsInAnimation = true;
             for (int y = 0; y < UIMgr.DiceUIList.Count; y++)
